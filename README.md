@@ -8,8 +8,7 @@ APP基本框架：
 
 效果图：
  
- ![](https://github.com/jdsjlzx/Community/blob/master/pic/app.gif?raw=true) 
- 
- 本项目使用的pull_recyclerview_library框架已经更名，最新请移步：
- https://github.com/jdsjlzx/LRecyclerView
- 
+<img src="https://github.com/jdsjlzx/Community/blob/master/pic/home.png" width=268 height=457 />
+<img src="https://github.com/jdsjlzx/Community/blob/master/pic/detail.png" width=268 height=457 />
+
+
