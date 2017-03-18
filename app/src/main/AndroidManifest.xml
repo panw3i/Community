@@ -58,11 +58,10 @@
         <activity android:name=".ui.SettingActivity" android:screenOrientation="portrait"/>
         <activity android:name=".ui.ForgetPwdActivity" android:screenOrientation="portrait"/>
         <activity android:name=".ui.ChargingPileActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".ui.PartyDetailActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".ui.CourseDetailActivity" android:screenOrientation="portrait"/>
         <activity android:name=".ui.SignActivity" android:screenOrientation="portrait"/>
         <activity android:name=".ui.UserInfoActivity" android:screenOrientation="portrait"/>
         <activity android:name=".ui.CommentActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".ui.PostActivity" android:screenOrientation="portrait"/>
         <activity android:name=".ui.FeedbackActivity" android:screenOrientation="portrait"/>
 
         <activity android:name="me.iwf.photopicker.PhotoPickerActivity" android:theme="@style/myTheme" />

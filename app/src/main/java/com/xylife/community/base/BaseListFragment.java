@@ -12,13 +12,15 @@ import com.android.framewok.base.BaseFragment;
 import com.android.framewok.base.ListBaseAdapter;
 import com.android.framewok.bean.Entity;
 import com.android.framewok.util.TLog;
-import com.cundong.recyclerview.CommonHeader;
-import com.cundong.recyclerview.CustRecyclerView;
-import com.cundong.recyclerview.HeaderAndFooterRecyclerViewAdapter;
-import com.cundong.recyclerview.LoadingFooter;
-import com.cundong.recyclerview.RecyclerOnScrollListener;
-import com.cundong.recyclerview.RecyclerViewStateUtils;
+import com.github.jdsjlzx.interfaces.OnLoadMoreListener;
+import com.github.jdsjlzx.interfaces.OnRefreshListener;
+import com.github.jdsjlzx.recyclerview.LRecyclerView;
+import com.github.jdsjlzx.recyclerview.LRecyclerViewAdapter;
+import com.github.jdsjlzx.util.RecyclerViewStateUtils;
+import com.github.jdsjlzx.view.CommonHeader;
+import com.github.jdsjlzx.view.LoadingFooter;
 import com.xylife.community.R;
+import com.xylife.community.bean.ListResponse;
 import com.xylife.community.bean.Response;
 import com.xylife.community.exception.ApiException;
 import com.xylife.community.ui.error.ErrorLayout;
@@ -38,13 +40,14 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
-public abstract class BaseListFragment<T extends Entity,D extends List<T>> extends BaseFragment {
+public abstract class BaseListFragment<T extends Entity> extends BaseFragment {
     /**每一页展示多少条数据*/
     protected int mCurrentPage = 0;
     protected int totalPage = 0;
+    protected final int REQUEST_COUNT = 10;
 
     @BindView(R.id.recycler_view)
-    protected CustRecyclerView mRecyclerView;
+    protected LRecyclerView mRecyclerView;
     @BindView(R.id.error_layout)
     ErrorLayout mErrorLayout;
 
@@ -52,7 +55,7 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
     protected Button toTopBtn;
 
     protected ListBaseAdapter<T> mListAdapter;
-    protected HeaderAndFooterRecyclerViewAdapter mRecyclerViewAdapter;
+    protected LRecyclerViewAdapter mRecyclerViewAdapter;
 
     protected boolean isRequestInProcess = false;
     protected boolean mIsStart = false;
@@ -109,28 +112,72 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
         adapter.setDuration(500);
         adapter.setInterpolator(new OvershootInterpolator(.5f));
 
-        mRecyclerViewAdapter = new HeaderAndFooterRecyclerViewAdapter(getActivity(), adapter);
+        mRecyclerViewAdapter = new LRecyclerViewAdapter(adapter);
         mRecyclerView.setAdapter(mRecyclerViewAdapter);
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mRecyclerView.setHasFixedSize(true);
 
-        mRecyclerView.addOnScrollListener(mOnScrollListener);
         initLayoutManager();
 
-        mRecyclerView.setLoadingListener(new CustRecyclerView.LoadingListener() {
+        mRecyclerView.setOnRefreshListener(new OnRefreshListener() {
             @Override
             public void onRefresh() {
-                if (isRequestInProcess) {
-                    return;
-                }
-                // 设置顶部正在刷新
-                setSwipeRefreshLoadingState();
-                mCurrentPage = 0;
-                requestData();
+                onRefreshView();
             }
         });
 
-        //mRecyclerView.setRefreshing(true);
+        mRecyclerView.setOnLoadMoreListener(new OnLoadMoreListener() {
+            @Override
+            public void onLoadMore() {
+
+                if (mCurrentPage < totalPage) {
+                    // loading more
+                    requestData();
+                } else {
+                    mRecyclerView.setNoMore(true);
+                }
+            }
+        });
+
+        mRecyclerView.setLScrollListener(new LRecyclerView.LScrollListener() {
+
+            @Override
+            public void onScrollUp() {
+                // 滑动时隐藏float button
+                if (toTopBtn.getVisibility() == View.VISIBLE) {
+                    toTopBtn.setVisibility(View.GONE);
+                    animate(toTopBtn, R.anim.floating_action_button_hide);
+                }
+            }
+
+            @Override
+            public void onScrollDown() {
+                if (toTopBtn.getVisibility() != View.VISIBLE) {
+                    toTopBtn.setVisibility(View.VISIBLE);
+                    animate(toTopBtn, R.anim.floating_action_button_show);
+                }
+            }
+
+            @Override
+            public void onScrolled(int distanceX, int distanceY) {
+
+                if (null != headerView) {
+                    if (distanceY == 0 || distanceY < headerView.getHeight()) {
+                        toTopBtn.setVisibility(View.GONE);
+                    }
+                } else {
+                    if (distanceY == 0) {
+                        toTopBtn.setVisibility(View.GONE);
+                    }
+                }
+            }
+
+            @Override
+            public void onScrollStateChanged(int state) {
+
+            }
+
+        });
 
         mErrorLayout.setOnLayoutClickListener(new View.OnClickListener() {
 
@@ -149,70 +196,16 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
                 toTopBtn.setVisibility(View.GONE);
             }
         });
+
+        //设置头部加载颜色
+        mRecyclerView.setHeaderViewColor(R.color.gray_text, R.color.gray_text, R.color.app_bg);
+        //设置底部加载颜色
+        mRecyclerView.setFooterViewColor(R.color.gray_text, R.color.gray_text, R.color.app_bg);
     }
 
     protected boolean requestDataIfViewCreated() {
         return true;
     }
-
-    protected RecyclerOnScrollListener mOnScrollListener = new RecyclerOnScrollListener() {
-
-        @Override
-        public void onScrolled(int dx, int dy) {
-            super.onScrolled(dx, dy);
-
-            if(null != headerView) {
-                if (dy == 0 || dy < headerView.getHeight()) {
-                    toTopBtn.setVisibility(View.GONE);
-                }
-            }
-
-
-        }
-
-        @Override
-        public void onScrollUp() {
-            // 滑动时隐藏float button
-            if (toTopBtn.getVisibility() == View.VISIBLE) {
-                toTopBtn.setVisibility(View.GONE);
-                animate(toTopBtn, R.anim.floating_action_button_hide);
-            }
-        }
-
-        @Override
-        public void onScrollDown() {
-            if (toTopBtn.getVisibility() != View.VISIBLE) {
-                toTopBtn.setVisibility(View.VISIBLE);
-                animate(toTopBtn, R.anim.floating_action_button_show);
-            }
-        }
-
-        @Override
-        public void onBottom() {
-            TLog.log("onBottom mCurrentPage = " + mCurrentPage);
-            LoadingFooter.State state = RecyclerViewStateUtils.getFooterViewState(mRecyclerView);
-            if(state == LoadingFooter.State.Loading) {
-                return;
-            }
-
-            if (mCurrentPage < totalPage) {
-                // loading more
-                RecyclerViewStateUtils.setFooterViewState(getActivity(), mRecyclerView, getPageSize(), LoadingFooter.State.Loading, null);
-                requestData();
-            } else {
-                //the end
-                /*if (totalPage > 1){
-                    RecyclerViewStateUtils.setFooterViewState(getActivity(), mRecyclerView, getPageSize(), LoadingFooter.State.TheEnd, null);
-                }else {
-                    RecyclerViewStateUtils.setFooterViewState(getActivity(), mRecyclerView, mListAdapter.getItemCount(), LoadingFooter.State.TheEnd, null);
-
-                }*/
-                RecyclerViewStateUtils.setFooterViewState(getActivity(), mRecyclerView, getPageSize(), LoadingFooter.State.TheEnd, null);
-            }
-        }
-
-
-    };
 
     private void animate(View view, int anim) {
         if (anim != 0) {
@@ -226,10 +219,14 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
         TLog.log("setSwipeRefreshLoadingState ");
     }
 
-    /** 设置顶部加载完毕的状态 */
+    /**
+     * 设置顶部加载完毕的状态
+     */
     protected void setSwipeRefreshLoadedState() {
-        TLog.log("setSwipeRefreshLoadedState ");
-        mRecyclerView.refreshComplete();
+        if(null != mRecyclerView) {
+            mRecyclerView.refreshComplete(REQUEST_COUNT);
+        }
+
     }
 
     // 完成刷新
@@ -241,7 +238,7 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
 
     protected abstract ListBaseAdapter<T> getListAdapter();
 
-    Observable<Response<D>> mObservable;
+    Observable<ListResponse<T>> mObservable;
     Subscription mSubscription;
     protected void requestData() {
         mCurrentPage++;
@@ -268,17 +265,28 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
         }
     }
 
-    private void toSubscribe(Observable<Response<D>> observable) {
+    protected void onRefreshView() {
+        if (isRequestInProcess) {
+            return;
+        }
+        // 设置顶部正在刷新
+        setSwipeRefreshLoadingState();
+        mCurrentPage = 0;
+        requestData();
+
+    }
+
+    private void toSubscribe(Observable<ListResponse<T>> observable) {
         mSubscription = observable.subscribeOn(Schedulers.io())
-                .map(new Func1<Response<D>,D>() {
+                .map(new Func1<ListResponse<T>,List<T>>() {
 
                     @Override
-                    public D call(Response<D> response) {
+                    public List<T> call(ListResponse<T> response) {
                         if(response == null){
                             throw new ApiException(100);
                         }
                         totalPage = response.total;
-                        return response.result;
+                        return response.data;
                     }
                 })
                 .observeOn(AndroidSchedulers.mainThread())
@@ -286,7 +294,7 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
 
     }
 
-    protected Observable<Response<D>> sendRequestData() {
+    protected Observable<ListResponse<T>> sendRequestData() {
         return null;
     }
 
@@ -307,9 +315,8 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
     }
 
     protected void executeOnLoadDataSuccess(List<T> data) {
-        TLog.log("executeOnLoadDataSuccess " + data.size());
         if (data == null) {
-            data = new ArrayList<>();
+            data = new ArrayList<T>();
         }
 
         mErrorLayout.setErrorType(ErrorLayout.HIDE_LAYOUT);
@@ -317,9 +324,22 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
         if (mCurrentPage == 1) {
             mListAdapter.setDataList(data);
         } else {
-            RecyclerViewStateUtils.setFooterViewState(mRecyclerView, LoadingFooter.State.Normal);
             mListAdapter.addAll(data);
         }
+
+        // 判断等于是因为最后有一项是listview的状态
+        if (mListAdapter.getItemCount() == 0) {
+
+            if (needShowEmptyNoData()) {
+                mErrorLayout.setNoDataContent(getNoDataTip());
+                mErrorLayout.setErrorType(ErrorLayout.NODATA);
+            }
+        }
+
+    }
+
+    protected boolean needShowEmptyNoData() {
+        return true;
     }
 
     protected void executeOnLoadDataError(String error) {
@@ -334,14 +354,11 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
             mCurrentPage--;
 
             mErrorLayout.setErrorType(ErrorLayout.HIDE_LAYOUT);
-            RecyclerViewStateUtils.setFooterViewState(getActivity(), mRecyclerView, getPageSize(), LoadingFooter.State.NetWorkError, mFooterClick);
             mListAdapter.notifyDataSetChanged();
         }
     }
 
-    protected void onRefreshNetworkSuccess() {}
-
-    protected Observer<D> mObserver = new Observer<D>() {
+    protected Observer<List<T>> mObserver = new Observer<List<T>>() {
         @Override
         public void onCompleted() {
             executeOnLoadFinish();
@@ -354,14 +371,16 @@ public abstract class BaseListFragment<T extends Entity,D extends List<T>> exten
         }
 
         @Override
-        public void onNext(D d) {
+        public void onNext(List<T> list) {
             TLog.log("onNext " );
-            List<T> list = d;
-            TLog.log("entity " + list.size());
             executeOnLoadDataSuccess(list);
 
             TLog.log("onSuccess totalPage " + totalPage);
         }
     };
+
+    protected String getNoDataTip() {
+        return "";
+    }
 
 }

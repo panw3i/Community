@@ -6,5 +6,5 @@ package com.android.framewok.bean;
  * 
  */
 public abstract class Entity {
-    protected int id;
+    public int id;
 }

@@ -15,7 +15,6 @@ import com.xylife.community.R;
 import com.xylife.community.adapter.MyFragmentPagerAdapter;
 import com.xylife.community.base.BaseActivity;
 import com.xylife.community.fragment.HomeFragment;
-import com.xylife.community.fragment.ScheduleFragment;
 import com.xylife.community.fragment.UserCenterFragment;
 import com.xylife.community.utils.DoubleClickExitHelper;
 import com.xylife.community.widget.GradientIconView;
@@ -49,8 +48,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
     static ArrayList<Fragment> mFragments = new ArrayList<>();
     static {
         mFragments.add(new HomeFragment());
-        //mFragments.add(new PartyFragment());
-        mFragments.add(new ScheduleFragment());
+        mFragments.add(new HomeFragment());
         mFragments.add(new UserCenterFragment());
     }
 

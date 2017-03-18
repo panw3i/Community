@@ -4,45 +4,40 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.view.View;
 
 import com.android.framewok.base.ListBaseAdapter;
-import com.cundong.recyclerview.CommonHeader;
-import com.cundong.recyclerview.RecyclerViewUtils;
+import com.github.jdsjlzx.ItemDecoration.DividerDecoration;
 import com.xylife.community.R;
-import com.xylife.community.adapter.ExerciseListAdapter;
+import com.xylife.community.adapter.CourseListAdapter;
 import com.xylife.community.api.APIWrapper;
 import com.xylife.community.base.BaseListFragment;
-import com.xylife.community.bean.Exercise;
-import com.xylife.community.bean.Response;
-import com.xylife.community.view.HomeSlideShowView;
-
-import java.util.List;
+import com.xylife.community.bean.Course;
+import com.xylife.community.bean.ListResponse;
 
 import rx.Observable;
 
 
-public class HomeFragment extends BaseListFragment<Exercise,List<Exercise>> {
+public class HomeFragment extends BaseListFragment<Course> {
 
-    private HomeSlideShowView slideShowView;
     @Override
     public void initView(View view) {
         super.initView(view);
 
-        headerView = new CommonHeader(getActivity(), R.layout.layout_home_header);
-        RecyclerViewUtils.setHeaderView(mRecyclerView, headerView);
+        DividerDecoration divider = new DividerDecoration.Builder(getActivity())
+                .setHeight(R.dimen.default_divider_height)
+                .setColorResource(R.color.divider_color)
+                .build();
 
-        slideShowView = (HomeSlideShowView) headerView.findViewById(R.id.banner_view);
+        mRecyclerView.addItemDecoration(divider);
+
     }
 
     @Override
-    protected ListBaseAdapter<Exercise> getListAdapter() {
-        return new ExerciseListAdapter(0);
+    protected ListBaseAdapter<Course> getListAdapter() {
+        return new CourseListAdapter();
     }
 
 
     @Override
     protected void onRefresh() {
-        if (null != slideShowView){
-            slideShowView.refreshView();
-        }
 
     }
 
@@ -53,8 +48,8 @@ public class HomeFragment extends BaseListFragment<Exercise,List<Exercise>> {
     }
 
     @Override
-    protected Observable<Response<List<Exercise>>> sendRequestData() {
-        return APIWrapper.getInstance().queryLookUp("人才",mCurrentPage);
+    protected Observable<ListResponse<Course>> sendRequestData() {
+        return APIWrapper.getInstance().getCourseList(mCurrentPage);
     }
 
     @Override

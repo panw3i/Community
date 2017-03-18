@@ -1,6 +1,5 @@
 package com.xylife.community.ui;
 
-import android.graphics.Paint;
 import android.support.v7.widget.AppCompatTextView;
 import android.view.View;
 import android.widget.Button;
@@ -13,7 +12,7 @@ import com.xylife.community.api.APIWrapper;
 import com.xylife.community.api.util.RxHelper;
 import com.xylife.community.api.util.RxSubscriber;
 import com.xylife.community.base.BaseTextActivity;
-import com.xylife.community.bean.JavaResponse;
+import com.xylife.community.bean.Response;
 
 import butterknife.BindView;
 
@@ -53,7 +52,7 @@ public class LoginActivity extends BaseTextActivity {
 
     @Override
     public void initData() {
-        accountText.setText("15001066722");
+        accountText.setText("15000066722");
         passwordText.setText("123456");
     }
 
@@ -86,10 +85,10 @@ public class LoginActivity extends BaseTextActivity {
         mPassword = passwordText.getText().toString();
 
         APIWrapper.getInstance().login(mUserName, mPassword)
-                .compose(new RxHelper<JavaResponse>("正在加载，请稍候").io_main(LoginActivity.this))
-                .subscribe(new RxSubscriber<JavaResponse>() {
+                .compose(new RxHelper<Response>("正在登陆，请稍候").io_main(LoginActivity.this))
+                .subscribe(new RxSubscriber<Response>() {
                     @Override
-                    public void _onNext(JavaResponse response) {
+                    public void _onNext(Response response) {
                         if(response.isSuccess()){
                             gotoActivity(MainActivity.class);
                         }else {
@@ -99,7 +98,8 @@ public class LoginActivity extends BaseTextActivity {
 
                     @Override
                     public void _onError(String msg) {
-                        AppToast.showShortText(LoginActivity.this,"登陆失败了");
+                        AppToast.showShortText(LoginActivity.this,"登陆失败了,跳到主页面");
+                        gotoActivity(MainActivity.class);
                     }
                 });
     }
@@ -126,7 +126,6 @@ public class LoginActivity extends BaseTextActivity {
             passwordText.requestFocus();
             return true;
         }
-
 
         return false;
     }

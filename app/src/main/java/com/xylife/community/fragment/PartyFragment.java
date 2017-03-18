@@ -9,8 +9,6 @@ import android.view.View;
 
 import com.android.framewok.base.BaseFragment;
 import com.xylife.community.R;
-import com.xylife.community.adapter.MyFragmentPagerAdapter;
-import com.xylife.community.base.BasePartyFragment;
 
 import java.util.ArrayList;
 
@@ -45,14 +43,7 @@ public class PartyFragment extends BaseFragment implements TabLayout.OnTabSelect
     @Override
     public void initView(View view) {
         super.initView(view);
-        tabs.setOnTabSelectedListener(this);
-        for (int i = 0; i < mLabels.length; i ++) {
-            tabs.addTab(tabs.newTab().setText(mLabels[i]));
-            mFragments.add(new BasePartyFragment().newInstance(mLabels[i].toString()));
-        }
 
-        viewPager.setAdapter(new MyFragmentPagerAdapter(getActivity().getSupportFragmentManager(), mFragments, mLabels));
-        viewPager.addOnPageChangeListener(this);
     }
 
     @Override

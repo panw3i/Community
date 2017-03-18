@@ -16,8 +16,6 @@ public class RetrofitUtil {
      */
     private static final String API_HOST = Constant.BASEURL;
 
-    private static final String API_TEST_HOST = Constant.BASEURL_IP;
-
     private static Retrofit mRetrofit;
     private static APIService mAPIService;
 

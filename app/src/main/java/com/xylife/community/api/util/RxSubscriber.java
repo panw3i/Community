@@ -18,6 +18,7 @@ public abstract class RxSubscriber<T> extends Subscriber<T> {
     @Override
     public void onError(Throwable e) {
         e.printStackTrace();
+        DialogHelper.stopProgressDlg();
         _onError(e.toString());
 
     }
